@@ -1,2 +1,4 @@
-data/
-pypeit/
+JWST/data/
+MMT/data/
+MMT/pypeit/
+.vscode
