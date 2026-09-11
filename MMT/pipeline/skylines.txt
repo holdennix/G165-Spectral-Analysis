@@ -1,0 +1,17 @@
+  4358.34   skyline
+  5577.338  skyline
+  6300.304  skyline
+  6863.955  skyline
+  7276.405  skyline
+  7750.640  skyline
+  7794.112  skyline
+  8344.602  skyline
+  8399.170  skyline
+  8430.174  skyline
+  8827.096  skyline
+  8885.850  skyline
+  8919.630  skyline
+  9001.346  skyline
+  9375.961  skyline
+  9439.650  skyline
+  9476.912  skyline
