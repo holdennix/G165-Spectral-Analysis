@@ -1,6 +1,7 @@
 import glob
 import os
 import numpy as np
+import sys
 from scipy.optimize import curve_fit
 
 import matplotlib
@@ -120,10 +121,16 @@ lname = ['Lylim','Lyb','Lya','NV','SiII','CIII/SiIII','CII/NIII','SiII/OI',' ','
 sky_waves = [5577, 6300, 8344]
 sky_names = ["[OI]", "[OI]", "[OI]"]
 
+# atmospheric lines
+# telluric absorption lines
+# 6860-6950 Oxygen b band
+# 7170-7350 Water vapor
+
+
 
 # Want to output all figures into scrollable PDF file
 with PdfPages("MMT/figures/mmt_spec_inspect.pdf") as pdf:
-    for i, f in enumerate(coadd_files):
+    for i, f in enumerate(coadd_files[:5]):
         # if i > 5: continue
 
         wave, flux, err, sky, smooth_flux, smoooth_err, smoothed_sky = load_spectrum(f, smooth=True)
@@ -132,8 +139,8 @@ with PdfPages("MMT/figures/mmt_spec_inspect.pdf") as pdf:
         # Don't care too much yet about bad redshift fits as
         # we have to redo it on PypeIt spectra
         if z==-1 or z==0:
-            print("Bad redshift... skipping")
-            continue
+            # print("Bad redshift... skipping")
+            z=0.3500001
 
         # Lots of plot setup to get the outline wanted
         fig = plt.figure(figsize=(15, 15))
@@ -159,7 +166,7 @@ with PdfPages("MMT/figures/mmt_spec_inspect.pdf") as pdf:
         ax0.set_ylabel("Flux [Counts]")
         ax0.set_title(f"{coords.ra.deg:.6f}, {coords.dec.deg:.6f} | z={z}")
         ax0.legend(loc="upper left")
-        ax0.set_ylim(2 * smooth_flux.min(), 2 * smooth_flux.max())
+        ax0.set_ylim(1.2 * smooth_flux.min(), 1.2 * smooth_flux.max())
 
         yann = 1.5 * smooth_flux.max()
         xoffs = 5
@@ -173,16 +180,17 @@ with PdfPages("MMT/figures/mmt_spec_inspect.pdf") as pdf:
         ax1.set_xlabel("Wavelength [Angstrom]")
         ax1.legend(loc="upper left")
         ax1.set_xlim(wave.min(), wave.max())
+        ax1.set_ylim(smoothed_sky.min(), smoothed_sky.max()/2)
 
         # Plot emission/absorption lines
-        zoom_lines = [35, 45, 46]        # indices of lwave/lname
+        zoom_lines = [35, 36, 39]        # indices of lwave/lname
         zoom_halfwidth = 30              # angstrom width of zoomed windows
         for ax_z, li in zip(ax_zoom, zoom_lines):
             center = lwave[li] * (1 + zed)
 
             mask = (wave > center - zoom_halfwidth) & (wave < center + zoom_halfwidth)
 
-            ax_z.plot(wave[mask], flux[mask], color="firebrick", lw=1, label="Flux")
+            ax_z.step(wave[mask], flux[mask], color="firebrick", lw=1, label="Flux")
             if err is not None:
                 ax_z.fill_between(wave[mask], (flux - err)[mask], (flux + err)[mask],
                                 color="steelblue", alpha=0.2)
@@ -191,13 +199,13 @@ with PdfPages("MMT/figures/mmt_spec_inspect.pdf") as pdf:
             ax_z.set_xlabel("Wavelength [Å]")
 
         # Need to do this again for bottom row
-        zoom_lines = [47, 54, 55]  
+        zoom_lines = [43, 45, 46]  
         for ax_z, li in zip(ax_zoom2, zoom_lines):
             center = lwave[li] * (1 + zed)
 
             mask = (wave > center - zoom_halfwidth) & (wave < center + zoom_halfwidth)
 
-            ax_z.plot(wave[mask], flux[mask], color="firebrick", lw=1)
+            ax_z.step(wave[mask], flux[mask], color="firebrick", lw=1)
             if err is not None:
                 ax_z.fill_between(wave[mask], (flux - err)[mask], (flux + err)[mask],
                                 color="steelblue", alpha=0.2)
@@ -205,17 +213,19 @@ with PdfPages("MMT/figures/mmt_spec_inspect.pdf") as pdf:
             ax_z.set_title(lname[li], fontsize=10)
             ax_z.set_xlabel("Wavelength [Å]")
 
-        zoom_lines = [0, 1, 2]  
+        zoom_lines = [47, 54, 55]  
         for ax_z, li in zip(ax_zoom3, zoom_lines):
-            center = sky_waves[li]
+            center = lwave[li] * (1 + zed)
 
             mask = (wave > center - zoom_halfwidth) & (wave < center + zoom_halfwidth)
 
-            ax_z.plot(wave[mask], sky[mask], color="black", lw=1, label="Sky Flux")
+            ax_z.step(wave[mask], flux[mask], color="firebrick", lw=1)
+            if err is not None:
+                ax_z.fill_between(wave[mask], (flux - err)[mask], (flux + err)[mask],
+                                color="steelblue", alpha=0.2)
             ax_z.axvline(x=center, color='green', lw=1, ls=':')
-            ax_z.set_title(sky_names[li], fontsize=10)
+            ax_z.set_title(lname[li], fontsize=10)
             ax_z.set_xlabel("Wavelength [Å]")
-            # ax_z.legend(loc="upper left")
 
 
         ax_zoom[0].set_ylabel("Flux [Counts]")
